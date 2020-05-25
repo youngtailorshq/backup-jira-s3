@@ -1,0 +1,45 @@
+#!/usr/bin/env ash
+
+set -e
+
+checkEnv() {
+  if [ -z "$1" ]; then
+    echo "Require variable $1 to be set"
+    exit 1
+  fi
+}
+
+checkEnv JIRA_HOME
+checkEnv POSTGRES_HOST
+checkEnv POSTGRES_PORT
+checkEnv POSTGRES_USERNAME
+checkEnv POSTGRES_PASSWORD
+checkEnv POSTGRES_DATABASE
+checkEnv AWS_REGION
+checkEnv AWS_ACCESS_KEY_ID
+checkEnv AWS_SECRET_ACCESS_KEY
+checkEnv AWS_BUCKET
+
+backupName="$(date '+%s_%Y_%m_%d')-jira"
+
+rm -rf "$backupName"
+mkdir -p "$backupName"
+
+echo "Dumping PostgresQL database"
+PGPASSWORD="$POSTGRES_PASSWORD" pg_dump \
+  -h "$POSTGRES_HOST" \
+  -p "$POSTGRES_PORT" \
+  -U "$POSTGRES_USERNAME" \
+  -d "$POSTGRES_DATABASE" \
+  > "$backupName/postgres"
+
+echo "Backing up JIRA_HOME/data directory"
+mkdir -p "$backupName/jira-home"
+cp -r "$JIRA_HOME/data" "$backupName/jira-home/data"
+
+echo "Compressing backup"
+tar -czf "$backupName.tar.gz" "$backupName"
+
+echo "Uploading to AWS S3"
+aws cp "$backupName.tar.gz" s3://${AWS_BUCKET}/${backupName}.tar.gz
+echo "Done"

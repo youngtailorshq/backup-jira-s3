@@ -1,0 +1,18 @@
+on:
+  push:
+    branches:
+      - master
+jobs:
+  build_push:
+    name: Build and push Docker images
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v2
+      - name: Build image and push to Docker Hub
+        uses: docker/build-push-action@v1
+        with:
+          username: youngtailors
+          password: ${{ secrets.DOCKER_PASSWORD }}
+          repository: youngtailors/backup-jira-s3
+          tags: latest
