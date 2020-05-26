@@ -1,9 +1,9 @@
-#!/usr/bin/env ash
+#!/usr/bin/env bash
 
 set -e
 
 checkEnv() {
-  if [ -z "$1" ]; then
+  if [ -z "${!1}" ]; then
     echo "Require variable $1 to be set"
     exit 1
   fi
